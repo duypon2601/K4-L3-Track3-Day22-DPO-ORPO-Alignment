@@ -49,3 +49,6 @@ hf_cache/
 .idea/
 .vscode/
 *.swp
+.auto-logs/
+REVIEW.md
+TASK_SUMMARY.md
