@@ -6,6 +6,7 @@ the whole notebook.
 from __future__ import annotations
 
 import ast
+import json
 import math
 import sys
 from pathlib import Path
@@ -18,6 +19,7 @@ sys.path.insert(0, str(REPO))
 torch = pytest.importorskip("torch")
 from lab22 import dpo_math as M
 NB0_PATH = REPO / "notebooks" / "00_dpo_loss_from_scratch.py"
+NB0_IPYNB_PATH = REPO / "notebooks" / "00_dpo_loss_from_scratch.ipynb"
 
 
 def _load_nb0_my_dpo_loss() -> tuple[object, str]:
@@ -94,4 +96,41 @@ def test_nb0_answers_displacement_question():
     assert len(words) >= 80, f"Answer cell must have at least 80 words, got {len(words)}"
     assert "rejected" in ans_text, "Answer cell must mention 'rejected'"
     assert "chosen" in ans_text, "Answer cell must mention 'chosen'"
+
+
+def test_nb0_ipynb_is_executed():
+    assert NB0_IPYNB_PATH.exists(), f"Notebook file not found: {NB0_IPYNB_PATH}"
+    nb_data = json.loads(NB0_IPYNB_PATH.read_text(encoding="utf-8"))
+
+    code_cells = [c for c in nb_data.get("cells", []) if c.get("cell_type") == "code"]
+    assert code_cells, "No code cells found in NB0 notebook"
+
+    for idx, cell in enumerate(code_cells):
+        assert cell.get("execution_count") is not None, f"Code cell {idx} has null execution_count: {cell}"
+        for out in cell.get("outputs", []):
+            assert out.get("output_type") != "error", f"Found error output in cell {idx}: {out}"
+
+    stream_texts = [
+        "".join(out.get("text", [])) if isinstance(out.get("text"), list) else out.get("text", "")
+        for cell in code_cells
+        for out in cell.get("outputs", [])
+        if out.get("output_type") == "stream"
+    ]
+    assert any("✓ Khớp tham chiếu" in text for text in stream_texts), "Expected '✓ Khớp tham chiếu' in stream output"
+    assert any("loss at init = 0.6931" in text for text in stream_texts), "Expected 'loss at init = 0.6931' in stream output"
+
+    sys.path.insert(0, str(REPO / "scripts"))
+    from build_colab import percent_cells
+
+    py_cells = percent_cells(NB0_PATH)
+    py_my_dpo = next(
+        c for c in py_cells
+        if c.get("cell_type") == "code" and "def my_dpo_loss(" in "".join(c.get("source", []))
+    )
+    ipynb_my_dpo = next(
+        c for c in code_cells
+        if "def my_dpo_loss(" in "".join(c.get("source", []))
+    )
+    assert ipynb_my_dpo["source"] == py_my_dpo["source"]
+
 

@@ -12,3 +12,9 @@
 - Highlighted that only separate rewards/chosen tracking in NB3 reveals this displacement, and that RPO penalizes it by incorporating NLL(chosen).
 - Added test_nb0_answers_displacement_question in scripts/test_nb0.py to validate cell presence, placement, word count, and keywords.
 - Regenerated Colab notebook bundles (colab/Lab22_DPO_T4.ipynb and colab/Lab22_DPO_BigGPU.ipynb) via scripts/build_colab.py.
+
+## Task 3: Commit the executed NB0 notebook with outputs
+- Generated `notebooks/00_dpo_loss_from_scratch.ipynb` from `notebooks/00_dpo_loss_from_scratch.py` using jupytext.
+- Executed the notebook in place with nbconvert to generate real cell execution counts and stream outputs.
+- Added `test_nb0_ipynb_is_executed` in `scripts/test_nb0.py` to verify notebook execution, output correctness, stream messages, and source consistency.
+- Verified that the complete test suite in `scripts/` passes cleanly.
