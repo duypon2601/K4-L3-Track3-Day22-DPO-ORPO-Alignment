@@ -61,3 +61,37 @@ def test_my_dpo_loss_has_no_todo():
     _, func_source = _load_nb0_my_dpo_loss()
     assert "TODO" not in func_source
     assert "return None" not in func_source
+
+
+def test_nb0_answers_displacement_question():
+    sys.path.insert(0, str(REPO / "scripts"))
+    from build_colab import percent_cells
+
+    cells = percent_cells(NB0_PATH)
+
+    sec5_idx = next(
+        i for i, c in enumerate(cells)
+        if c["cell_type"] == "markdown" and "## 5. Likelihood displacement" in "".join(c["source"])
+    )
+    rpo_idx = next(
+        i for i, c in enumerate(cells)
+        if c["cell_type"] == "markdown" and "**RPO**" in "".join(c["source"])
+    )
+    assert sec5_idx < rpo_idx
+
+    matching = [
+        (i, c) for i, c in enumerate(cells)
+        if c["cell_type"] == "markdown" and "**Trả lời (NB0):**" in "".join(c["source"])
+    ]
+    assert len(matching) == 1, "Expected exactly one markdown cell with '**Trả lời (NB0):**'"
+    ans_idx, ans_cell = matching[0]
+
+    assert sec5_idx < ans_idx < rpo_idx, "Answer cell must be located between section 5 heading and RPO cell"
+
+    ans_text = "".join(ans_cell["source"])
+    assert ans_text.strip().startswith("**Trả lời (NB0):**")
+    words = ans_text.split()
+    assert len(words) >= 80, f"Answer cell must have at least 80 words, got {len(words)}"
+    assert "rejected" in ans_text, "Answer cell must mention 'rejected'"
+    assert "chosen" in ans_text, "Answer cell must mention 'chosen'"
+

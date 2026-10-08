@@ -113,6 +113,15 @@ for name, (pc_, pr_) in scenarios.items():
     print(f"{name:28s} loss {loss.item():.3f}  reward chosen {cr.item():+.1f}  rejected {rj.item():+.1f}")
 
 # %% [markdown]
+# **Trả lời (NB0):**
+# Hàm mất mát DPO chỉ phụ thuộc vào hiệu số (log π(y_w) − log π_ref(y_w)) − (log π(y_l) − log π_ref(y_l)),
+# tức margin giữa chosen và rejected. Do đó, margin vẫn tăng khi log-prob của rejected giảm nhanh hơn
+# mức giảm của chosen. Cụ thể ở kịch bản B, chosen reward là −3 và rejected reward là −5, tạo margin +2
+# và cho loss giống hệt kịch bản A dù chosen bị giảm xác suất. Hiện tượng likelihood displacement này
+# không thể phát hiện qua loss tổng quát; chỉ đường cong `rewards/chosen` ở NB3 mới bộc lộ việc log-prob
+# của chosen bị suy giảm. Để khắc phục, biến thể RPO thêm số hạng NLL(chosen) nhằm phạt trực tiếp điều này.
+
+# %% [markdown]
 # **RPO** thêm NLL của câu chosen vào loss: kịch bản B bị phạt vì chosen bị đẩy xuống.
 
 # %%
